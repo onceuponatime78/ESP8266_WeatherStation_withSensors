@@ -1,3 +1,28 @@
+/**The MIT License (MIT)
+
+Copyright (c) 2015 by Daniel Eichhorn
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+See more at http://blog.squix.ch
+*/
+
 #include <FS.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -10,7 +35,7 @@
 #include "WeatherStationFonts.h";
 #include "WeatherStationImages.h";
 #include "TimeClient.h"
-#include "ThingspeakClient.h"
+//#include "ThingspeakClient.h"
 //DHT Library
 #include <dht.h>
 //DS1820 Library
@@ -30,6 +55,7 @@
 /***************************
  * Begin Settings
  **************************/
+
 //MQTT
 char mqtt_server[40] = "NONE";
 char mqtt_port[6] = "1883";
@@ -76,8 +102,9 @@ MQTTClient client;
 //WifiManager Trigger (set to Flash button)
 #define TRIGGER_PIN 0
 
-// TimeClient settings
+// TimeClient settings (google)
 const float UTC_OFFSET = 1;
+TimeClient timeClient(UTC_OFFSET);
 
 // Wunderground Settings [Weather Service]
 const boolean IS_METRIC = true;
@@ -103,12 +130,12 @@ SSD1306Ui ui     ( &display );
  * End Settings
  **************************/
 
-TimeClient timeClient(UTC_OFFSET);
+
 
 // Set to false, if you prefere imperial/inches, Fahrenheit
 WundergroundClient wunderground(IS_METRIC);
 
-ThingspeakClient thingspeak;
+//ThingspeakClient thingspeak;
 
 // this array keeps function pointers to all frames
 // frames are the single views that slide from right to left
@@ -279,7 +306,6 @@ void updateData(SSD1306 *display) {
   wunderground.updateForecast(WUNDERGRROUND_API_KEY, WUNDERGROUND_COUNTRY, WUNDERGROUND_CITY);
   drawProgress(display, 80, "Updating Indoor...");
   readSensors();
-
 //  thingspeak.getLastChannelItem(THINGSPEAK_CHANNEL_ID, THINGSPEAK_API_READ_KEY);
   lastUpdate = timeClient.getFormattedTime();
   readyForWeatherUpdate = false;
@@ -306,7 +332,7 @@ bool drawFrame1(SSD1306 *display, SSD1306UiState* state, int x, int y) {
   int textWidth = display->getStringWidth(date);
   display->drawString(64 + x, 10 + y, date);
   display->setFont(ArialMT_Plain_24);
-  String time = timeClient.getFormattedTime();
+  String time = timeClient.getFormattedTime(); //original
   textWidth = display->getStringWidth(time);
   display->drawString(64 + x, 20 + y, time);
   display->setTextAlignment(TEXT_ALIGN_LEFT);

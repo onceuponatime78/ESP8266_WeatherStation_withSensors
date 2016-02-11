@@ -63,7 +63,6 @@ void WundergroundClient::doUpdate(String url) {
         // get available data size
         size_t size = stream->available();
         if(size) {
-          // read up to 128 byte
           int c = (stream->readBytes(buff, ((size > sizeof(buff)) ? sizeof(buff) : size)));
           char x = (char)buff[0];
           if (x == '{' || x == '[') {
