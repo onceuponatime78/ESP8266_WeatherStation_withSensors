@@ -108,9 +108,9 @@ TimeClient timeClient(UTC_OFFSET);
 
 // Wunderground Settings [Weather Service]
 const boolean IS_METRIC = true;
-const String WUNDERGRROUND_API_KEY = "f26a91e9011df5a0";
-const String WUNDERGROUND_COUNTRY = "DE";
-const String WUNDERGROUND_CITY = "zmw:00000.26.10516";
+char WUNDERGRROUND_API_KEY[32] = "dummyKey";
+char WUNDERGROUND_COUNTRY[8] = "DE";
+char WUNDERGROUND_CITY[32] = "zmw:00000.26.10516";
 
 //Thingspeak Settings
 //const String THINGSPEAK_CHANNEL_ID = "67284";
@@ -301,6 +301,7 @@ void updateData(SSD1306 *display) {
   drawProgress(display, 10, "Updating time...");
   timeClient.updateTime();
   drawProgress(display, 30, "Updating conditions...");
+  Serial.println(WUNDERGRROUND_API_KEY);
   wunderground.updateConditions(WUNDERGRROUND_API_KEY, WUNDERGROUND_COUNTRY, WUNDERGROUND_CITY);
   drawProgress(display, 50, "Updating forecasts...");
   wunderground.updateForecast(WUNDERGRROUND_API_KEY, WUNDERGROUND_COUNTRY, WUNDERGROUND_CITY);
@@ -496,10 +497,13 @@ void wifiConfig(int wifi_mode) {
           Serial.println("\nparsed json");
           strcpy(mqtt_server, json["mqtt_server"]);
           strcpy(mqtt_port, json["mqtt_port"]);
-          //strcpy(mqtt_clientName, json["mqtt_clientName"]);
+          strcpy(mqtt_clientName, json["mqtt_clientName"]);
           strcpy(mqtt_temp_outdoor_topic, json["mqtt_temp_outdoor_topic"]);
           strcpy(mqtt_temp_indoor_topic, json["mqtt_temp_indoor_topic"]);
           strcpy(mqtt_humi_indoor_topic, json["mqtt_humi_indoor_topic"]);
+          strcpy(WUNDERGRROUND_API_KEY, json["WUNDERGRROUND_API_KEY"]);
+          strcpy(WUNDERGROUND_COUNTRY, json["WUNDERGROUND_COUNTRY"]);
+          strcpy(WUNDERGROUND_CITY, json["WUNDERGROUND_CITY"]);
 
         } else {
           Serial.println("failed to load json config");
@@ -518,6 +522,9 @@ void wifiConfig(int wifi_mode) {
   WiFiManagerParameter custom_mqtt_temp_outdoor_topic("temp_outdoor_topic", "OutDoor Temperature Topic", mqtt_temp_outdoor_topic, 64);
   WiFiManagerParameter custom_mqtt_temp_indoor_topic("temp_indoor_topic", "Indoor Temperature Topic", mqtt_temp_indoor_topic, 128);
   WiFiManagerParameter custom_mqtt_humi_indoor_topic("humi_indoor_topic", "Indoor Humidity Topic", mqtt_humi_indoor_topic, 128);
+  WiFiManagerParameter custom_WUNDERGRROUND_API_KEY("WUNDERGRROUND_API_KEY", "Wunderground API Key", WUNDERGRROUND_API_KEY, 32);
+  WiFiManagerParameter custom_WUNDERGROUND_COUNTRY("WUNDERGROUND_COUNTRY", "Wunderground Country", WUNDERGROUND_COUNTRY, 8);
+  WiFiManagerParameter custom_WUNDERGROUND_CITY("WUNDERGROUND_CITY", "Wunderground City", WUNDERGROUND_CITY, 32);
 
 
   //Local intialization. Once its business is done, there is no need to keep it around
@@ -530,6 +537,9 @@ void wifiConfig(int wifi_mode) {
   wifiManager.addParameter(&custom_mqtt_temp_outdoor_topic);
   wifiManager.addParameter(&custom_mqtt_temp_indoor_topic);
   wifiManager.addParameter(&custom_mqtt_humi_indoor_topic);
+  wifiManager.addParameter(&custom_WUNDERGRROUND_API_KEY);
+  wifiManager.addParameter(&custom_WUNDERGROUND_COUNTRY);
+  wifiManager.addParameter(&custom_WUNDERGROUND_CITY);
 
 
   //set config save notify callback
@@ -574,6 +584,9 @@ void wifiConfig(int wifi_mode) {
   strcpy(mqtt_temp_outdoor_topic, custom_mqtt_temp_outdoor_topic.getValue());
   strcpy(mqtt_temp_indoor_topic, custom_mqtt_temp_indoor_topic.getValue());
   strcpy(mqtt_humi_indoor_topic, custom_mqtt_humi_indoor_topic.getValue());
+  strcpy(WUNDERGRROUND_API_KEY, custom_WUNDERGRROUND_API_KEY.getValue());
+  strcpy(WUNDERGROUND_COUNTRY, custom_WUNDERGROUND_COUNTRY.getValue());
+  strcpy(WUNDERGROUND_CITY, custom_WUNDERGROUND_CITY.getValue());
 
   //save the custom parameters to FS
   if (shouldSaveConfig) {
@@ -586,6 +599,10 @@ void wifiConfig(int wifi_mode) {
     json["mqtt_temp_outdoor_topic"] = mqtt_temp_outdoor_topic;
     json["mqtt_temp_indoor_topic"] = mqtt_temp_indoor_topic;
     json["mqtt_humi_indoor_topic"] = mqtt_humi_indoor_topic;
+    json["WUNDERGRROUND_API_KEY"] = WUNDERGRROUND_API_KEY;
+    json["WUNDERGROUND_COUNTRY"] = WUNDERGROUND_COUNTRY;
+    json["WUNDERGROUND_CITY"] = WUNDERGROUND_CITY;
+
 
     File configFile = SPIFFS.open("/config.json", "w");
     if (!configFile) {
