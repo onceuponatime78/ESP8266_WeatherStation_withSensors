@@ -279,11 +279,15 @@ void loop() {
 
    if (sensorUpdate && ui.getUiState().frameState == FIXED && !readyForWeatherUpdate) {
       readSensors();
+      yield();
       sensorUpdate=false;
+      Serial.println("Sensor data update done");
    }
 
   if (readyForWeatherUpdate && ui.getUiState().frameState == FIXED) {
     updateData(&display);
+    yield();
+    Serial.println("Weather data update done");
   }
 
   int remainingTimeBudget = ui.update();
@@ -416,6 +420,7 @@ void readSensors() {
   Serial.print("DHT, \t");
   //DHT11=DHT.read11, DHT33=DHT.read
   int chk = DHT.read(DHT11_PIN);
+  yield();
   switch (chk)
   {
     case DHTLIB_OK:
@@ -442,6 +447,7 @@ void readSensors() {
    float temp;
     sensors.requestTemperatures();
     temp = sensors.getTempCByIndex(0);
+    yield();
     //sample for second sensor
     //float temp2;
     //temp2 = sensors.getTempCByIndex(1);
@@ -457,11 +463,15 @@ void readSensors() {
   }
 
   //publish values via mqtt
-  if (utilize_mqtt && client.connected()) {
+  if (utilize_mqtt && client.connected() && WiFi.status() == WL_CONNECTED) {
     Serial.println("MQTT publish");
     client.publish(mqtt_temp_indoor_topic, temperature_indoor);
+    yield();
     client.publish(mqtt_temp_outdoor_topic, temperature_outdoor);
+    yield();
     client.publish(mqtt_humi_indoor_topic, humidity);
+    yield();
+    Serial.println("MQTT publish done");
   }  else {
     Serial.println("MQTT deactivated or not connected - will not publish");
   }
@@ -545,6 +555,15 @@ void wifiConfig(int wifi_mode) {
   //set config save notify callback
   wifiManager.setSaveConfigCallback(saveConfigCallback);
 
+  //sets timeout until configuration portal gets turned off
+  //useful to make it all retry or go to sleep
+  //in seconds
+  wifiManager.setTimeout(180);
+
+  //set connection Timeout
+  //in seconds
+  //wifiManager.setConnectTimeout(30);
+
   //set static ip
   //wifiManager.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
 
@@ -555,7 +574,7 @@ void wifiConfig(int wifi_mode) {
   //if it does not connect it starts an access point with the specified name
   //here  "AutoConnectAP"
   //and goes into a blocking loop awaiting configuration
-    switch (wifi_mode)
+  switch (wifi_mode)
   {
     case 0:
       if (!wifiManager.autoConnect("WetterDingsie")) {
